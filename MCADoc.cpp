@@ -26,8 +26,8 @@ DWORD		devIndex;
 int			devcnt, devlast;
 PUCHAR      pbuf; // pbuf[16384];
 char        buf[256];
-unsigned short ibuf [1986663]; // 3973326/2  1986560はデータサイズのみ
-UCHAR pipeID,pipeIDr;
+unsigned short ibuf[1986663]; // 3973326/2  1986560はデータサイズのみ
+UCHAR pipeID, pipeIDr;
 
 // CMCADoc
 
@@ -71,75 +71,75 @@ END_MESSAGE_MAP()
 CMCADoc::CMCADoc()
 {
 	// TODO: add one-time construction code here
-	int i,j;
+	int i, j;
 	FT_60XCONFIGURATION chipConfig;
 
-	icsr=0;
-	for(i=0;i<DMAX;i++){
-		a[i]=b[i]=c[i]=d[i]=0;
-		dp[i].x=i;dp[i].y=0;
+	icsr = 0;
+	for (i = 0; i < DMAX; i++) {
+		a[i] = b[i] = c[i] = d[i] = 0;
+		dp[i].x = i; dp[i].y = 0;
 	}
-	for(i=0;i<IMAGESIZEX;i++){
-		for(j=0;j<IMAGESIZEY;j++){
+	for (i = 0; i < IMAGESIZEX; i++) {
+		for (j = 0; j < IMAGESIZEY; j++) {
 			image[i][j] = 0; image1[i][j] = 0;
 		}
 	}
-	for(i=0;i<100;i++)param[i]=0;  // Communication between CMCAView and CMCADoc
+	for (i = 0; i < 100; i++)param[i] = 0;  // Communication between CMCAView and CMCADoc
 
-	param[20]=0; /* 1-dim 0 2-dim 1*/
-	param[19]=0; // USB DEVICE IDLING
-	param[18]=0; // USB DEVICE ACTIVE =1
+	param[20] = 0; /* 1-dim 0 2-dim 1*/
+	param[19] = 0; // USB DEVICE IDLING
+	param[18] = 0; // USB DEVICE ACTIVE =1
 
-	param[2]=256; /* Initial Scale x-axis : 256 = 8K Channel,  128 = 16K Channel */
-	param[3]=8192;/* Initial Scale y-axis*/
-	param[9]=0; /* Current Position */
-	param[10]=4; /* transfer length */
-	param[11]=10; /* 10 times */
+	param[2] = 256; /* Initial Scale x-axis : 256 = 8K Channel,  128 = 16K Channel */
+	param[3] = 8192;/* Initial Scale y-axis*/
+	param[9] = 0; /* Current Position */
+	param[10] = 4; /* transfer length */
+	param[11] = 10; /* 10 times */
 
-	for(i=0;i<16;i++)roi[i]=0.0;
+	for (i = 0; i < 16; i++)roi[i] = 0.0;
 
-///////////////////////////////////////////////////////////////////////////
-	// USB setup
-    numDevs = 0;
+	///////////////////////////////////////////////////////////////////////////
+		// USB setup
+	numDevs = 0;
 
-           ftStatus = FT_ListDevices(&numDevs,NULL,FT_LIST_NUMBER_ONLY);
-           devlast = numDevs;
-		   d[0]=devlast; d[1]=ftStatus;
+	ftStatus = FT_ListDevices(&numDevs, NULL, FT_LIST_NUMBER_ONLY);
+	devlast = numDevs;
+	d[0] = devlast; d[1] = ftStatus;
 
-			for(devcnt = 0;devcnt != devlast;devcnt++){
-               devIndex = (DWORD)devcnt;
+	for (devcnt = 0; devcnt != devlast; devcnt++) {
+		devIndex = (DWORD)devcnt;
 
-               ftStatus = FT_ListDevices((PVOID)devIndex,buf,
-                                          FT_LIST_BY_INDEX|FT_OPEN_BY_SERIAL_NUMBER);
- 		   b[0]=ftStatus;
-               if(ftStatus == FT_OK){
+		ftStatus = FT_ListDevices((PVOID)devIndex, buf,
+			FT_LIST_BY_INDEX | FT_OPEN_BY_SERIAL_NUMBER);
+		b[0] = ftStatus;
+		if (ftStatus == FT_OK) {
 
-                   ftStatus = FT_Create(buf,
-                                        FT_OPEN_BY_SERIAL_NUMBER,&ftHandle[devcnt]); // D3XX用
-				   param[18]=1; // active device found
-				   param[19]=99; // Just Conneced
-				   pipeID = 0x2; pipeIDr = 0x82; //pipeID for write pipeIDr for read
-				   FT_GetChipConfiguration(ftHandle[devcnt], &chipConfig);
-				   a[0]=chipConfig.FIFOMode;
-				   a[1]=chipConfig.ChannelConfig;
-				   a[2] = chipConfig.FIFOClock;
-				   a[3] = chipConfig.MSIO_Control;
-				   //chipConfig.FIFOMode = CONFIGURATION_FIFO_MODE_245;
-				   //chipConfig.ChannelConfig = CONFIGURATION_CHANNEL_CONFIG_1;
-				  // FT_SetChipConfiguration(ftHandle[devcnt], &chipConfig);
-               }
-		   }
-			pbuf = (PUCHAR)malloc(sizeof(PUCHAR) * 8192);
+			ftStatus = FT_Create(buf,
+				FT_OPEN_BY_SERIAL_NUMBER, &ftHandle[devcnt]); // D3XX用
+			param[18] = 1; // active device found
+			param[19] = 99; // Just Conneced
+			pipeID = 0x2; pipeIDr = 0x82; //pipeID for write pipeIDr for read
+			FT_GetChipConfiguration(ftHandle[devcnt], &chipConfig);
+			a[0] = chipConfig.FIFOMode;
+			a[1] = chipConfig.ChannelConfig;
+			a[2] = chipConfig.FIFOClock;
+			a[3] = chipConfig.MSIO_Control;
+			//chipConfig.FIFOMode = CONFIGURATION_FIFO_MODE_245;
+			//chipConfig.ChannelConfig = CONFIGURATION_CHANNEL_CONFIG_1;
+		   // FT_SetChipConfiguration(ftHandle[devcnt], &chipConfig);
+		}
+	}
+	pbuf = (PUCHAR)malloc(sizeof(PUCHAR) * 8192);
 
 }
 
 CMCADoc::~CMCADoc()
 {
-	
-           for(devcnt = 0;devcnt != devlast;devcnt++){
-             ftStatus = FT_Close(ftHandle[devcnt]);  // USB Device CLOSE
-		   }
-		   free(pbuf);
+
+	for (devcnt = 0; devcnt != devlast; devcnt++) {
+		ftStatus = FT_Close(ftHandle[devcnt]);  // USB Device CLOSE
+	}
+	free(pbuf);
 }
 
 
@@ -169,7 +169,7 @@ void CMCADoc::OnDrawThumbnail(CDC& dc, LPRECT lprcBounds)
 	CString strText = _T("TODO: implement thumbnail drawing here");
 	LOGFONT lf;
 
-	CFont* pDefaultGUIFont = CFont::FromHandle((HFONT) GetStockObject(DEFAULT_GUI_FONT));
+	CFont* pDefaultGUIFont = CFont::FromHandle((HFONT)GetStockObject(DEFAULT_GUI_FONT));
 	pDefaultGUIFont->GetLogFont(&lf);
 	lf.lfHeight = 36;
 
@@ -242,8 +242,8 @@ void CMCADoc::OnMcaStart()
 	b[0] = ftStatus;
 	param[19] = 1;
 
-  SetModifiedFlag();
-  UpdateAllViews(NULL);
+	SetModifiedFlag();
+	UpdateAllViews(NULL);
 
 
 }
@@ -254,7 +254,6 @@ void CMCADoc::OnMcaStop()
 
 	DWORD       WriteNum, TransNum;
 
-
 	devcnt = 0;	// device #0
 	TransNum = 0; WriteNum = 1;
 	pbuf[0] = 0x06; // AFE STOP COMMAND
@@ -263,138 +262,132 @@ void CMCADoc::OnMcaStop()
 	param[19] = 1;
 
 	SetModifiedFlag();
-	UpdateAllViews(NULL);	
+	UpdateAllViews(NULL);
 
 }
 
 
 void CMCADoc::OnMcaMemoryclear()
 {
-  DWORD       WriteNum, TransNum;
-  
+	DWORD       WriteNum, TransNum;
 
-  devcnt=0;	// device #0
-               TransNum = 0; WriteNum=1; 
-			   pbuf[0]=0x01; // MEMORY CLEAR COMMAND
-               ftStatus = FT_WritePipe(ftHandle[devcnt],pipeID, pbuf,WriteNum,&TransNum, NULL);
-		b[0]=ftStatus;
-	param[19]=1;
+
+	devcnt = 0;	// device #0
+	TransNum = 0; WriteNum = 1;
+	pbuf[0] = 0x01; // MEMORY CLEAR COMMAND
+	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
+	b[0] = ftStatus;
+	param[19] = 1;
 
 }
 
 
 void CMCADoc::OnMcaPointerclear()
 {
-	
-	  DWORD       WriteNum,  TransNum;
-  	
 
-    devcnt=0;	// device #0		address counter clear command 0x20;
-               TransNum = 0; WriteNum=1; 
-			   pbuf[0]=0x02; //
-               ftStatus = FT_WritePipe(ftHandle[devcnt],pipeID, pbuf,WriteNum,&TransNum, NULL);
-			   b[0] = ftStatus;
-	param[19]=2;
-  
+	DWORD       WriteNum, TransNum;
+
+
+	devcnt = 0;	// device #0		address counter clear command 0x20;
+	TransNum = 0; WriteNum = 1;
+	pbuf[0] = 0x02; //
+	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
+	b[0] = ftStatus;
+	param[19] = 2;
+
 	SetModifiedFlag();
-	UpdateAllViews(NULL);	
+	UpdateAllViews(NULL);
 
 }
 
 
 void CMCADoc::OnMcaMemoryread()
 {
-	int i,j;
-  DWORD       WriteNum, TransNum;
-  DWORD       ReadNum;
-  PUCHAR  bufc; // [8192];
+	int i, j;
+	DWORD       WriteNum, TransNum;
+	DWORD       ReadNum;
+	PUCHAR  bufc; // [8192];
 
-  devcnt=0;	// device #0
-  bufc = (PUCHAR) malloc(sizeof(PUCHAR) * 8192);
+	devcnt = 0;	// device #0
+	bufc = (PUCHAR)malloc(sizeof(PUCHAR) * 8192);
 
-  for (j = 0; j<1024; j++) bufc[j]=0;
+	for (j = 0; j < 1024; j++) bufc[j] = 0;
+	TransNum = 0; WriteNum = 1;
+	ReadNum = 1024;
 
-			TransNum = 0; WriteNum=1; 
-			ReadNum = 1024;
-
-			   pbuf[0]=0x05; // USB FIFO data load command
-  //             ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf,WriteNum,&TransNum, NULL);
-//			   b[0] = ftStatus; b[1] = TransNum;
-
-//			   OVERLAPPED vOverlapped  = { 0 };
-//			   ftStatus = FT_InitializeOverlapped(ftHandle, &vOverlapped );
+	pbuf[0] = 0x05; // USB FIFO data load command
+	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf,WriteNum,&TransNum, NULL);
+	b[0] = ftStatus; b[1] = TransNum;
+	OVERLAPPED vOverlapped  = { 0 };
+	ftStatus = FT_InitializeOverlapped(ftHandle, &vOverlapped );
 			   //UCHAR   acBuf[BUFFER_SIZE] = { 0xFF };
-			   ULONG  ulBytesTransferred  = 0;
-			   ULONG  buffersize, ulActualBytesToTransfer;
-			   ;
+	ULONG  ulBytesTransferred = 0;
+	ULONG  buffersize, ulActualBytesToTransfer;
+	;
 
 
-/*			   ftStatus = FT_ReadPipe(ftHandle, 0x82, acBuf,BUFFER_SIZE, &ulBytesTransferred, &vOverlapped
-				   );
-			   if
-				   (ftStatus == FT_IO_PENDING)
-			   {
-				   ftStatus = FT_GetOverlappedResult(ftHandle, &vOverlapped, &ulBytesTransferred,TRUE);
-			   }
+	/*			   ftStatus = FT_ReadPipe(ftHandle, 0x82, acBuf,BUFFER_SIZE, &ulBytesTransferred, &vOverlapped
+					   );
+				   if
+					   (ftStatus == FT_IO_PENDING)
+				   {
+					   ftStatus = FT_GetOverlappedResult(ftHandle, &vOverlapped, &ulBytesTransferred,TRUE);
+				   }
+				   FT_ReleaseOverlapped(ftHandle, &
+					   vOverlapped
+				   )
+	*/
+	//			   FT_SetStreamPipe(ftHandle[devcnt], FALSE, FALSE, 0x82, buffersize);
+	ulBytesTransferred = 200;
+	ulActualBytesToTransfer = 4096;
 
-			   FT_ReleaseOverlapped(ftHandle, &
-				   vOverlapped
-			   )
-*/
-//			   FT_SetStreamPipe(ftHandle[devcnt], FALSE, FALSE, 0x82, buffersize);
-			   ulBytesTransferred = 200;
-			   ulActualBytesToTransfer = 4096;
+	ftStatus = FT_SetStreamPipe(ftHandle, FALSE, FALSE, 0x82, ulActualBytesToTransfer);
+	ftStatus = FT_ReadPipe(ftHandle[devcnt], 0x82, bufc, 4096, &ulBytesTransferred, NULL);
 
+	for (j = 0; j < 2048; j++) a[j] = bufc[2 * j] + bufc[2 * j + 1] * 256;
 
-			   ftStatus = FT_SetStreamPipe(ftHandle, FALSE, FALSE, 0x82, ulActualBytesToTransfer);
-			   ftStatus = FT_ReadPipe(ftHandle[devcnt], 0x82, bufc, 4096, &ulBytesTransferred, NULL);
-
-			   for (j = 0; j < 2048; j++) a[j] = bufc[2 * j] + bufc[2 * j + 1] * 256;
-
-			   			   b[0] = ftStatus; b[1] = ulBytesTransferred;
-						   FT_ClearStreamPipe(ftHandle[devcnt], FALSE, FALSE, 0x82);
-  free(bufc);
-  param[19]=5;
+	b[0] = ftStatus; b[1] = ulBytesTransferred;// b[0] is 0, b[1] is 4096
+	FT_ClearStreamPipe(ftHandle[devcnt], FALSE, FALSE, 0x82);
+	free(bufc);
+	param[19] = 5;
 
 	SetModifiedFlag();
-	UpdateAllViews(NULL);	
-
+	UpdateAllViews(NULL);
 }
 
 
 void CMCADoc::OnMcaThreshold()
 {
-		
-  DWORD       WriteNum, TransNum;
-  
-  // Threshold UP
 
-  devcnt=0;	// device #0
-               TransNum = 0; WriteNum=1; 
-			   pbuf[0]=0x8; 
-               ftStatus = FT_WritePipe(ftHandle[devcnt],pipeID,pbuf,WriteNum,&TransNum, NULL);
-	param[19]=16;
+	DWORD       WriteNum, TransNum;
+
+	// Threshold UP
+
+	devcnt = 0;	// device #0
+	TransNum = 0; WriteNum = 1;
+	pbuf[0] = 0x8;
+	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
+	param[19] = 16;
 	SetModifiedFlag();
-	UpdateAllViews(NULL);	
+	UpdateAllViews(NULL);
 
 }
 
 
 void CMCADoc::OnMcaThreshold32777()
 {
-	  DWORD       WriteNum, TransNum;
-  
-  // Threshold RESET
+	DWORD       WriteNum, TransNum;
 
-  devcnt=0;	// device #0
-               TransNum = 0; WriteNum=1; 
-			   pbuf[0]=0x3; 
-               ftStatus = FT_WritePipe(ftHandle[devcnt],pipeID,pbuf,WriteNum,&TransNum, NULL);
-	param[19]=6;
+	// Threshold RESET
+
+	devcnt = 0;	// device #0
+	TransNum = 0; WriteNum = 1;
+	pbuf[0] = 0x3;
+	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
+	param[19] = 6;
 
 	SetModifiedFlag();
-	UpdateAllViews(NULL);	
-
+	UpdateAllViews(NULL);
 
 }
 
@@ -404,29 +397,29 @@ BOOL CMCADoc::OnSaveDocument(LPCTSTR lpszPathName)
 {
 	CStdioFile afile;
 	CString Ctmp;
-//	LPTSTR lpszPathNamep;
+	//	LPTSTR lpszPathNamep;
 	FILE *fp;
-	int i; 
+	int i;
 	fp = fopen("data.txt", "wt");
 	//for (i = 0; i < 8192; i++) { fprintf(fp, "%lf\n", a[i]); }
 	fclose(fp);
 
-//	lpszPathNamep=(LPTSTR)malloc(sizeof(LPTSTR) * 256);
-//	lstrcpyn(lpszPathNamep,lpszPathName,lstrlen(lpszPathName)-3);
-//	lstrcat(lpszPathNamep,"bin");
+	//	lpszPathNamep=(LPTSTR)malloc(sizeof(LPTSTR) * 256);
+	//	lstrcpyn(lpszPathNamep,lpszPathName,lstrlen(lpszPathName)-3);
+	//	lstrcat(lpszPathNamep,"bin");
 
-//	afile.Open(lpszPathNamep, CFile::modeCreate | CFile::modeWrite | CFile::typeText);
+	//	afile.Open(lpszPathNamep, CFile::modeCreate | CFile::modeWrite | CFile::typeText);
 
-//	int i = 0, j=0,k=0;
-//	for (i = 0; i < IMAGESIZEX; i++) { for (j = 0; j < IMAGESIZEY; j++) { ibuf[k] = image[i][j]; k++; } }
+	//	int i = 0, j=0,k=0;
+	//	for (i = 0; i < IMAGESIZEX; i++) { for (j = 0; j < IMAGESIZEY; j++) { ibuf[k] = image[i][j]; k++; } }
 
-	//afile.Write(ibuf,3973120 );
-	//	afile.Write((const void *)image[0][0], 3973120);
+		//afile.Write(ibuf,3973120 );
+		//	afile.Write((const void *)image[0][0], 3973120);
 
-		//afile.Flush();
+			//afile.Flush();
 
-	//afile.Close();
-	//free(lpszPathNamep);
+		//afile.Close();
+		//free(lpszPathNamep);
 	UpdateAllViews(NULL);
 	return TRUE;
 	//return CDocument::OnSaveDocument(lpszPathName);
@@ -434,46 +427,46 @@ BOOL CMCADoc::OnSaveDocument(LPCTSTR lpszPathName)
 
 BOOL CMCADoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
-CStdioFile afile;
-CFileException fe;
-int i,j,k,l;
-unsigned char bf[10];
+	CStdioFile afile;
+	CFileException fe;
+	int i, j, k, l;
+	unsigned char bf[10];
 
-CString Ctmp;
-// typeText -> typeBinary
-if( !afile.Open(lpszPathName, CFile::modeRead | CFile::typeBinary))
+	CString Ctmp;
+	// typeText -> typeBinary
+	if (!afile.Open(lpszPathName, CFile::modeRead | CFile::typeBinary))
 		return false;
 
-//ASCII DATA
-//for(i=0;i<DMAX;i++){afile.ReadString(Ctmp); 
-//a[i]=atof(CT2A(Ctmp));}
-//
-// Read TIFF Data format
+	//ASCII DATA
+	//for(i=0;i<DMAX;i++){afile.ReadString(Ctmp); 
+	//a[i]=atof(CT2A(Ctmp));}
+	//
+	// Read TIFF Data format
 
-afile.Read(ibuf, 16);
+	afile.Read(ibuf, 16);
 
-for (i = 0; i < 8; i++) { a[i] = ibuf[i]; }
+	for (i = 0; i < 8; i++) { a[i] = ibuf[i]; }
 
-afile.Read(ibuf, 3973120);
-afile.Close();
-l = 0;
-// block data? 
-for (i = 0; i < IMAGESIZEX; i++) {
-	
-	for (j = 0; j < IMAGESIZEY; j++) {
-		image[i][j] = ibuf[l];
-			a[ j ] = ibuf[l];
+	afile.Read(ibuf, 3973120);
+	afile.Close();
+	l = 0;
+	// block data? 
+	for (i = 0; i < IMAGESIZEX; i++) {
+
+		for (j = 0; j < IMAGESIZEY; j++) {
+			image[i][j] = ibuf[l];
+			a[j] = ibuf[l];
 			l++;
 
-	//l += 0;
-}
-}
-//(int) ibuf[i + j * 512] + (int) 256 * ibuf[i +1+ j * 512]; } }
+			//l += 0;
+		}
+	}
+	//(int) ibuf[i + j * 512] + (int) 256 * ibuf[i +1+ j * 512]; } }
 
-UpdateAllViews(NULL);
+	UpdateAllViews(NULL);
 
 	return TRUE;
-//return CDocument::OnOpenDocument(lpszPathName );
+	//return CDocument::OnOpenDocument(lpszPathName );
 
 }
 
@@ -492,24 +485,24 @@ BOOL CMCADoc::OnNewDocument()
 void CMCADoc::OnMcaWaveformrec()
 {
 	// TODO: ここにコマンド ハンドラー コードを追加します。		
-  DWORD       WriteNum, TransNum;
-  
-  // USB input
+	DWORD       WriteNum, TransNum;
 
-  devcnt=0;	// device #0
-               TransNum = 0; WriteNum=1; 
-			   pbuf[0]=0x04; 
-               ftStatus = FT_WritePipe(ftHandle[devcnt],pipeID, pbuf,WriteNum,&TransNum, NULL);
-	param[19]=3;
+	// USB input
+
+	devcnt = 0;	// device #0
+	TransNum = 0; WriteNum = 1;
+	pbuf[0] = 0x04;
+	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
+	param[19] = 3;
 	SetModifiedFlag();
-	UpdateAllViews(NULL);	
+	UpdateAllViews(NULL);
 
 }
 
 
 void CMCADoc::OnView1d()
 {
-	 param[20]=1-param[20]; // 1D/ 2D toggle
+	param[20] = 1 - param[20]; // 1D/ 2D toggle
 }
 
 
@@ -548,10 +541,11 @@ void CMCADoc::OnMcaWavemonitor()
 		ftStatus = FT_ReadPipe(ftHandle[devcnt], 0x82, bufc, 4096, &ulBytesTransferred, NULL);
 
 		for (j = 0; j < 2048; j++) a[j] = bufc[2 * j] + bufc[2 * j + 1] * 256;
+		//for (j = 0; j < 2048; j++) a[j] = 500;
 
 		b[0] = ftStatus; b[1] = ulBytesTransferred;
 		FT_ClearStreamPipe(ftHandle[devcnt], FALSE, FALSE, 0x82);
-		
+
 		param[19] = 5;
 
 		SetModifiedFlag();
@@ -559,7 +553,7 @@ void CMCADoc::OnMcaWavemonitor()
 	}
 	free(bufc);
 
- }
+}
 
 
 
@@ -567,7 +561,7 @@ void CMCADoc::OnOperationCopybtoa()
 {
 	// TODO: ここにコマンド ハンドラー コードを追加します。
 	int i;
-	for(i=0;i<DMAX;i++){a[i]=b[i];}
+	for (i = 0; i < DMAX; i++) { a[i] = b[i]; }
 	UpdateAllViews(NULL);
 }
 
@@ -575,9 +569,10 @@ void CMCADoc::OnOperationCopybtoa()
 void CMCADoc::OnOperationCleara()
 {
 	// TODO: ここにコマンド ハンドラー コードを追加します。
-	int i,j;
+	int i, j;
 	for (i = 0; i < IMAGESIZEX; i++) {
-		for (j = 0; j < IMAGESIZEY; j++){ image[i][j] = 0; }}
+		for (j = 0; j < IMAGESIZEY; j++) { image[i][j] = 0; }
+	}
 	UpdateAllViews(NULL);
 }
 
@@ -586,7 +581,7 @@ void CMCADoc::OnOperationCopyctoa()
 {
 	// TODO: ここにコマンド ハンドラー コードを追加します。
 	int i;
-	for(i=0;i<DMAX;i++){a[i]=c[i];}
+	for (i = 0; i < DMAX; i++) { a[i] = c[i]; }
 	UpdateAllViews(NULL);
 }
 
@@ -595,7 +590,7 @@ void CMCADoc::OnOperationCopydtoa()
 {
 	// TODO: ここにコマンド ハンドラー コードを追加します。
 	int i;
-	for(i=0;i<DMAX;i++){a[i]=d[i];}
+	for (i = 0; i < DMAX; i++) { a[i] = d[i]; }
 	UpdateAllViews(NULL);
 }
 
@@ -604,7 +599,7 @@ void CMCADoc::OnOperationClearb()
 {
 	// 
 	int i;
-	for(i=0;i<DMAX;i++){b[i]=0;}
+	for (i = 0; i < DMAX; i++) { b[i] = 0; }
 	UpdateAllViews(NULL);
 }
 
@@ -613,7 +608,7 @@ void CMCADoc::OnOperationClearc()
 {
 	// TODO: ここにコマンド ハンドラー コードを追加します。
 	int i;
-	for(i=0;i<DMAX;i++){c[i]=0;}
+	for (i = 0; i < DMAX; i++) { c[i] = 0; }
 	UpdateAllViews(NULL);
 }
 
@@ -622,7 +617,7 @@ void CMCADoc::OnOperationCleard()
 {
 	// TODO: ここにコマンド ハンドラー コードを追加します。
 	int i;
-	for(i=0;i<DMAX;i++){d[i]=0;}
+	for (i = 0; i < DMAX; i++) { d[i] = 0; }
 	UpdateAllViews(NULL);
 }
 
@@ -631,9 +626,10 @@ void CMCADoc::OnOperationCopyatob()
 {
 	// TODO: Add your command handler code here
 
-	int i,j;
+	int i, j;
 	for (i = 0; i < IMAGESIZEX; i++) {
-		for( j = 0; j < IMAGESIZEY; j++){ image1[i][j] = image[i][j]; }}
+		for (j = 0; j < IMAGESIZEY; j++) { image1[i][j] = image[i][j]; }
+	}
 
 	UpdateAllViews(NULL);
 }
@@ -654,7 +650,7 @@ void CMCADoc::OnOperationCopyatoc()
 void CMCADoc::OnOperationCopyatod()
 {
 	int i;
-	for (i = 0; i<DMAX; i++) { d[i] = a[i]; }
+	for (i = 0; i < DMAX; i++) { d[i] = a[i]; }
 	UpdateAllViews(NULL);
 }
 
@@ -674,7 +670,7 @@ void CMCADoc::OnOperationSampledata()
 	int i, j;
 	for (i = 0; i < IMAGESIZEX; i++) {
 		for (j = 0; j < IMAGESIZEY; j++) {
-			image[i][j] = image[i][j]/image2[i][j]*16384;
+			image[i][j] = image[i][j] / image2[i][j] * 16384;
 			//if (image[i][j] < 0)image[i][j] = 0;
 		}
 	}
@@ -718,12 +714,16 @@ void CMCADoc::OnOperationSubtractafromb()
 void CMCADoc::OnAnalysFt6000x4()
 {
 	// TODO: ここにコマンド ハンドラー コードを追加します。
+	//STATE 1
 
 	DWORD       WriteNum, TransNum;
 
 	devcnt = 0;	// device #0
 	TransNum = 0; WriteNum = 1;
 	pbuf[0] = 0x06;
+	int j;
+	// write 256 from 0 to 2048
+	for (j = 0; j < 2048; j++) a[j] = 256;
 	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
 	param[19] = 3;
 	SetModifiedFlag();
@@ -735,6 +735,7 @@ void CMCADoc::OnAnalysFt6000x4()
 void CMCADoc::OnAnalysFt6000x5()
 {
 	// TODO: ここにコマンド ハンドラー コードを追加します。
+	// STATE 2
 	DWORD       WriteNum, TransNum;
 
 	devcnt = 0;	// device #0
@@ -750,6 +751,7 @@ void CMCADoc::OnAnalysFt6000x5()
 void CMCADoc::OnAnalysFt6000x6()
 {
 	// TODO: ここにコマンド ハンドラー コードを追加します。
+	// STATE 3
 	DWORD       WriteNum, TransNum;
 
 	devcnt = 0;	// device #0
