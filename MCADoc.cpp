@@ -346,8 +346,9 @@ void CMCADoc::OnMcaMemoryread()
 
 	for (j = 0; j < 2048; j++) a[j] = bufc[2 * j] + bufc[2 * j + 1] * 256;
 
-	b[0] = ftStatus; b[1] = ulBytesTransferred;// b[0] is 0, b[1] is 4096
-	FT_ClearStreamPipe(ftHandle[devcnt], FALSE, FALSE, 0x82);
+	b[0] = ftStatus; b[1] = ulBytesTransferred;// b[0] is 0 (FT_OK=0, see type definitions, page 55 of ftdi d3xx)
+											   // b[1] is 4096
+	FT_ClearStreamPipe(ftHandle[devcnt], FALSE, FALSE, 0x82);//stops 0x82 pipe to stop
 	free(bufc);
 	param[19] = 5;
 
@@ -569,10 +570,8 @@ void CMCADoc::OnOperationCopybtoa()
 void CMCADoc::OnOperationCleara()
 {
 	// TODO: ここにコマンド ハンドラー コードを追加します。
-	int i, j;
-	for (i = 0; i < IMAGESIZEX; i++) {
-		for (j = 0; j < IMAGESIZEY; j++) { image[i][j] = 0; }
-	}
+	int i;
+	for (i = 0; i < DMAX; i++) { a[i] = 0; }
 	UpdateAllViews(NULL);
 }
 
