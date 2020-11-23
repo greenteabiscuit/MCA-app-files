@@ -323,9 +323,6 @@ void CMCADoc::OnMcaMemoryread()
 			   //UCHAR   acBuf[BUFFER_SIZE] = { 0xFF };
 	ULONG  ulBytesTransferred = 0;
 	ULONG  buffersize, ulActualBytesToTransfer;
-	;
-
-
 	/*			   ftStatus = FT_ReadPipe(ftHandle, 0x82, acBuf,BUFFER_SIZE, &ulBytesTransferred, &vOverlapped
 					   );
 				   if
@@ -383,7 +380,7 @@ void CMCADoc::OnMcaThreshold32777()
 
 	devcnt = 0;	// device #0
 	TransNum = 0; WriteNum = 1;
-	pbuf[0] = 0x3;
+	pbuf[0] = 0x5;
 	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
 	param[19] = 6;
 
@@ -521,37 +518,37 @@ void CMCADoc::OnMcaWavemonitor()
 	devcnt = 0;	// device #0
 	bufc = (PUCHAR)malloc(sizeof(PUCHAR) * 8192);
 
-	for (i = 0; i < 10; i++) {
+	TransNum = 0; WriteNum = 1;
+	ReadNum = 1024;
 
-		TransNum = 0; WriteNum = 1;
-		ReadNum = 1024;
+	pbuf[0] = 0x05; // ADC START
+	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
 
-		pbuf[0] = 0x05; // ADC START
-		ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
+	pbuf[0] = 0x06; // ADC STOP
+	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
 
-		pbuf[0] = 0x06; // ADC STOP
-		ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
+	pbuf[0] = 0x02; // RESET POINTER
+	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
 
-		pbuf[0] = 0x02; // RESET POINTER
-		ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
+	ulBytesTransferred = 200;
+	ulActualBytesToTransfer = 4096;
 
-		ulBytesTransferred = 200;
-		ulActualBytesToTransfer = 4096;
+	ftStatus = FT_SetStreamPipe(ftHandle, FALSE, FALSE, 0x82, ulActualBytesToTransfer);
+	ftStatus = FT_ReadPipe(ftHandle[devcnt], 0x82, bufc, 4096, &ulBytesTransferred, NULL);
 
-		ftStatus = FT_SetStreamPipe(ftHandle, FALSE, FALSE, 0x82, ulActualBytesToTransfer);
-		ftStatus = FT_ReadPipe(ftHandle[devcnt], 0x82, bufc, 4096, &ulBytesTransferred, NULL);
+	for (j = 0; j < 2048; j++) a[j] = bufc[2 * j] + bufc[2 * j + 1] * 256;
+	//for (j = 0; j < 2048; j++) c[j] = bufc[2 * j];
+	//for (j = 0; j < 2048; j++) d[j] = bufc[2 * j + 1] * 256;
+	//for (j = 0; j < 8192; j++) a[j] = bufc[2 * j];
+	//for (j = 0; j < 2048; j++) a[j] = 500;
 
-		for (j = 0; j < 2048; j++) a[j] = bufc[2 * j] + bufc[2 * j + 1] * 256;
-		//for (j = 0; j < 2048; j++) a[j] = 500;
+	b[0] = ftStatus; b[1] = ulBytesTransferred;
+	FT_ClearStreamPipe(ftHandle[devcnt], FALSE, FALSE, 0x82);
 
-		b[0] = ftStatus; b[1] = ulBytesTransferred;
-		FT_ClearStreamPipe(ftHandle[devcnt], FALSE, FALSE, 0x82);
+	param[19] = 5;
 
-		param[19] = 5;
-
-		SetModifiedFlag();
-		UpdateAllViews(NULL);
-	}
+	SetModifiedFlag();
+	UpdateAllViews(NULL);
 	free(bufc);
 
 }
