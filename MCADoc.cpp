@@ -91,7 +91,7 @@ CMCADoc::CMCADoc()
 	param[18] = 0; // USB DEVICE ACTIVE =1
 
 	param[2] = 256; /* Initial Scale x-axis : 256 = 8K Channel,  128 = 16K Channel */
-	param[3] = 8192;/* Initial Scale y-axis*/
+	param[3] = 8192 * 16;/* Initial Scale y-axis*/
 	param[9] = 0; /* Current Position */
 	param[10] = 4; /* transfer length */
 	param[11] = 10; /* 10 times */
@@ -521,6 +521,8 @@ void CMCADoc::OnMcaWavemonitor()
 	TransNum = 0; WriteNum = 1;
 	ReadNum = 1024;
 
+	ftStatus = FT_SetPipeTimeout(ftHandle[devcnt], pipeID, 10000);
+
 	pbuf[0] = 0x05; // ADC START
 	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
 
@@ -535,7 +537,7 @@ void CMCADoc::OnMcaWavemonitor()
 
 	ftStatus = FT_SetStreamPipe(ftHandle, FALSE, FALSE, 0x82, ulActualBytesToTransfer);
 	ftStatus = FT_ReadPipe(ftHandle[devcnt], 0x82, bufc, 4096, &ulBytesTransferred, NULL);
-
+	
 	for (j = 0; j < 2048; j++) a[j] = bufc[2 * j] + bufc[2 * j + 1] * 256;
 	//for (j = 0; j < 2048; j++) c[j] = bufc[2 * j];
 	//for (j = 0; j < 2048; j++) d[j] = bufc[2 * j + 1] * 256;
