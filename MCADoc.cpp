@@ -315,36 +315,21 @@ void CMCADoc::OnMcaMemoryread()
 	TransNum = 0; WriteNum = 1;
 	ReadNum = 1024;
 
-	pbuf[0] = 0x05; // USB FIFO data load command
-	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf,WriteNum,&TransNum, NULL);
-	b[0] = ftStatus; b[1] = TransNum;
-	OVERLAPPED vOverlapped  = { 0 };
-	ftStatus = FT_InitializeOverlapped(ftHandle, &vOverlapped );
-			   //UCHAR   acBuf[BUFFER_SIZE] = { 0xFF };
+
 	ULONG  ulBytesTransferred = 0;
 	ULONG  buffersize, ulActualBytesToTransfer;
-	/*			   ftStatus = FT_ReadPipe(ftHandle, 0x82, acBuf,BUFFER_SIZE, &ulBytesTransferred, &vOverlapped
-					   );
-				   if
-					   (ftStatus == FT_IO_PENDING)
-				   {
-					   ftStatus = FT_GetOverlappedResult(ftHandle, &vOverlapped, &ulBytesTransferred,TRUE);
-				   }
-				   FT_ReleaseOverlapped(ftHandle, &
-					   vOverlapped
-				   )
-	*/
-	//			   FT_SetStreamPipe(ftHandle[devcnt], FALSE, FALSE, 0x82, buffersize);
+
 	ulBytesTransferred = 200;
 	ulActualBytesToTransfer = 4096;
+
+	pbuf[0] = 0x02; // RESET POINTER
+	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
 
 	ftStatus = FT_SetStreamPipe(ftHandle, FALSE, FALSE, 0x82, ulActualBytesToTransfer);
 	ftStatus = FT_ReadPipe(ftHandle[devcnt], 0x82, bufc, 4096, &ulBytesTransferred, NULL);
 
 	for (j = 0; j < 2048; j++) a[j] = bufc[2 * j] + bufc[2 * j + 1] * 256;
 
-	b[0] = ftStatus; b[1] = ulBytesTransferred;// b[0] is 0 (FT_OK=0, see type definitions, page 55 of ftdi d3xx)
-											   // b[1] is 4096
 	FT_ClearStreamPipe(ftHandle[devcnt], FALSE, FALSE, 0x82);//stops 0x82 pipe to stop
 	free(bufc);
 	param[19] = 5;
@@ -521,8 +506,10 @@ void CMCADoc::OnMcaWavemonitor()
 	TransNum = 0; WriteNum = 1;
 	ReadNum = 1024;
 
-	ftStatus = FT_SetPipeTimeout(ftHandle[devcnt], pipeID, 10000);
-
+	for (int i = 0; i < 5; i++) {
+		pbuf[0] = 0x05; // ADC START
+		ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
+	}
 	pbuf[0] = 0x05; // ADC START
 	ftStatus = FT_WritePipe(ftHandle[devcnt], pipeID, pbuf, WriteNum, &TransNum, NULL);
 
